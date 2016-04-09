@@ -7,11 +7,12 @@
 # Noise Example: https://raspberrypikid.wordpress.com/2014/03/31/raspberry-pi-buzzer/
 
 import pushover
-import os
 import RPi.GPIO as GPIO
 import time
-import daemon
-import lockfile
+import logging
+
+# Main path
+main_path = '/opt/doorbell'
 
 # Configure Raspberry Pi Bits
 buzzer_pin = 17
@@ -24,18 +25,26 @@ GPIO.setup(switch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(blink_pin, GPIO.OUT)
 
 # Configure pushover client
-client = pushover.PushoverClient(os.environ['HOME'] + "/.pushover")
+client = pushover.PushoverClient(main_path + "/.pushover")
 
-# Configure Daemon
+# logging
+logger = logging.getLogger("Doorbell")
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler = logging.FileHandler(main_path + "/doorbell.log")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 def send_message():
   try:
+    logger.debug("Sending Pushover Message")
     client.send_message("Someone's at the door!")
   except SomeError:
-    print "The message failed to send"
+    logger.warn("The message failed to send")
   return;
 
 def buzz():
+  logger.debug("Buzzing")
   pitch = 300
   period = 1.0 / pitch
   delay = period / 2
@@ -48,6 +57,7 @@ def buzz():
     time.sleep(delay)
 
 def blink():
+  logger.debug("Blinking")
   for i in range(10):
     GPIO.output(blink_pin, True)
     time.sleep(0.05)
@@ -55,10 +65,11 @@ def blink():
     time.sleep(0.05)
 
 def read_loop():
+  logger.debug("Starting main loop")
   while True:
     input_state = GPIO.input(switch_pin)
     if input_state == False:
-      print('Button Pressed')
+      logger.info('Doorbell Pressed')
       send_message()
       buzz()
       blink()
