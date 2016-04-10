@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Hacky Doorbell Daemon - Leon Wright - techman83@gmail.com - 2016-04-09
 #
@@ -6,10 +6,12 @@
 # Button Example: http://razzpisampler.oreilly.com/ch07.html
 # Noise Example: https://raspberrypikid.wordpress.com/2014/03/31/raspberry-pi-buzzer/
 
-import pushover
+import configparser
 import RPi.GPIO as GPIO
 import time
 import logging
+import http.client
+import urllib
 
 # Main path
 main_path = '/opt/doorbell'
@@ -24,8 +26,11 @@ GPIO.setup(buzzer_pin, GPIO.OUT)
 GPIO.setup(switch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(blink_pin, GPIO.OUT)
 
-# Configure pushover client
-client = pushover.PushoverClient(main_path + "/.pushover")
+# Configuration
+config = configparser.RawConfigParser()
+config.read(main_path + "/.pushover")
+user_key = config.get('pushover','user_key')
+app_key = config.get('pushover','app_key')
 
 # logging
 logger = logging.getLogger("Doorbell")
@@ -38,10 +43,16 @@ logger.addHandler(handler)
 def send_message():
   try:
     logger.debug("Sending Pushover Message")
-    client.send_message("Someone's at the door!")
-  except SomeError:
+    conn = http.client.HTTPSConnection("api.pushover.net:443")
+    conn.request("POST", "/1/messages.json",
+      urllib.parse.urlencode({
+        "token": app_key,
+        "user": user_key,
+        "message": "Someone's at the door",
+      }), { "Content-type": "application/x-www-form-urlencoded" })
+    conn.getresponse()
+  except:
     logger.warn("The message failed to send")
-  return;
 
 def buzz():
   logger.debug("Buzzing")
