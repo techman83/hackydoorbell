@@ -82,8 +82,8 @@ def read_loop():
     if input_state == False:
       logger.info('Doorbell Pressed')
       send_message()
-      buzz()
       blink()
+      buzz()
       time.sleep(5)
 
 read_loop()
