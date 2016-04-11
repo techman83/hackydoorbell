@@ -24,6 +24,7 @@ blink_pin = 21
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(buzzer_pin, GPIO.OUT)
 GPIO.setup(switch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.add_event_detect(switch_pin, GPIO.RISING, bouncetime=5000)
 GPIO.setup(blink_pin, GPIO.OUT)
 
 # Configuration
@@ -75,15 +76,17 @@ def blink():
     GPIO.output(blink_pin, False)
     time.sleep(0.05)
 
-def read_loop():
-  logger.debug("Starting main loop")
-  while True:
-    input_state = GPIO.input(switch_pin)
-    if input_state == False:
-      logger.info('Doorbell Pressed')
-      send_message()
-      blink()
-      buzz()
-      time.sleep(5)
+def button_press(channel):
+  logger.info('Doorbell Pressed')
+  send_message()
+  blink()
+  buzz()
 
-read_loop()
+def exit(signal, frame):
+  GPIO.cleanup()
+  sys.exit(0)
+
+GPIO.add_event_callback(switch_pin, button_press)
+
+while True:
+  time.sleep(0.2)
