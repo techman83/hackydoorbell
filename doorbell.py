@@ -82,6 +82,7 @@ def button_press(channel):
   blink()
   buzz()
 
+# TODO: Handle exits gracefully
 def exit(signal, frame):
   GPIO.cleanup()
   sys.exit(0)
