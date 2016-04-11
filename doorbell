@@ -65,9 +65,8 @@ case "$1" in
         echo -n "Restarting $DESC ..."
         start-stop-daemon --stop --quiet \
                 --retry=TERM/30/KILL/5 \
-                --pid $PIDFILE \
-                --user $USER \
-                --name node $DAEMON
+                --pidfile $PIDFILE \
+                --user $USER
         case "$?" in
                 0|1)
                         [ -d $PIDDIR ] || install -o $USER -d $PIDDIR
@@ -76,6 +75,7 @@ case "$1" in
                                 --pidfile $PIDFILE \
                                 --chuid $USER:$GROUP \
                                 --chdir $WORKDIR \
+                                --background \
                                 --exec $DAEMON
                         case "$?" in
                                 0) echo "Restarted" ;;
